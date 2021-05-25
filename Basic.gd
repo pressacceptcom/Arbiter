@@ -75,7 +75,11 @@ class_name PressAccept_Arbiter_Basic
 # | Changelog |
 # |-----------|
 #
-# 1.0    05/24/2021    First Release
+# 1.0.0    05/24/2021    First Release
+# 1.0.1    05/25/2021    Added ability to pass base-10 string representation
+#                            as argument to instance
+#                        Altered unsigned_int_to_array to use Array
+#                            and push_front
 #
 
 # ****************
@@ -342,20 +346,18 @@ static func hexadecimal_to_array(
 # and thus operates on the absolute value of int_value to avoid 2s-complement
 # issues
 static func unsigned_int_to_array(
-		int_value: int) -> PoolByteArray:
+		int_value: int) -> Array:
 
 	if int_value < 0:
 		int_value = int(abs(int_value))
 
-	var ret: PoolByteArray = PoolByteArray()
+	var ret: Array = Array()
 
 	while int_value > 0:
 		var byte: int = int_value & (INT_BYTE_BASE - 1)
 
-		ret.push_back(byte)
+		ret.push_front(byte)
 		int_value = int_value >> 8
-
-	ret.invert()
 
 	_normalize([ ret ])
 
@@ -951,6 +953,19 @@ func set_value(
 	self.negative_bool = false
 
 	match typeof(new_value):
+		TYPE_STRING:
+			new_value = new_value if new_value else '0'
+			var base_10_arr: Array
+
+			for digit in new_value:
+				if digit == '-':
+					base_10_arr.push_back(-1)
+				else:
+					base_10_arr.push_back(int(digit))
+
+			set_value(base_10_arr, 10, new_base)
+			return
+
 		TYPE_INT:
 			if new_value < 0:
 				self.negative_bool = true
@@ -1077,7 +1092,7 @@ func to_hexadecimal() -> String:
 		array_to_hexadecimal(digits)
 
 
-# adds addend (integer, array, or object) to internal value
+# adds addend (integer, string, array, or object) to internal value
 #
 # NOTE: addend_base_int is ignored unless addend is array
 func add(
@@ -1105,7 +1120,7 @@ func add(
 	return self
 
 
-# compares comparison (integer, array, or object) to internal value
+# compares comparison (integer, string, array, or object) to internal value
 #
 # NOTE: comparison_base_int is ignore unelss comparison is array
 #
@@ -1134,7 +1149,7 @@ func compare(
 	return ret
 
 
-# subtracts subtrahend (integer, array, or object) from internal value
+# subtracts subtrahend (integer, string, array, or object) from internal value
 #
 # NOTE: subtrahend_base_int is ignored unless subtrahend is array
 func subtract(
@@ -1171,7 +1186,7 @@ func subtract(
 	return self
 
 
-# multiplies multiplicand (integer, array, or object) by internal value
+# multiplies multiplicand (integer, string, array, or object) by internal value
 #
 # NOTE: multiplicand_base_int is ignored unless multiplicand is array
 func multiply(
@@ -1198,7 +1213,7 @@ func multiply(
 	return self
 
 
-# divides internal value by divisor (integer, array, or object)
+# divides internal value by divisor (integer, string, array, or object)
 #
 # NOTE: divisor_base_int is ignored unless divisor is array
 #
@@ -1266,7 +1281,7 @@ func _normalize_operand(
 			pass
 		TYPE_INT:
 			operand = get_script().new(operand, base_int)
-		TYPE_ARRAY:
+		TYPE_ARRAY, TYPE_STRING:
 			operand = get_script().new(operand, operand_base_init)
 		_:
 			return null
@@ -1274,3 +1289,4 @@ func _normalize_operand(
 	operand.base_int = base_int
 
 	return operand
+

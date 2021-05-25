@@ -43,8 +43,13 @@ extends "res://addons/gut/test.gd"
 # | Changelog |
 # |-----------|
 #
-# 1.0    05/24/2021    First Release
+# 1.0.0    05/24/2021    First Release
+# 1.0.1    05/25/2021    Added tests for string representation arguments
+#                        Formatted to eliminate warnings/errors
+#                        Fixed bug of not testing for array arguments
 #
+
+# warning-ignore-all:return_value_discarded
 
 # shorthand for our library class
 var Basic: Script = PressAccept_Arbiter_Basic
@@ -53,7 +58,7 @@ var Basic: Script = PressAccept_Arbiter_Basic
 var INT_RANDOM_SEED : int = hash('PressAccept_Arbiter_Basic')
 
 # numebr of times to iterate each test
-var INT_NUM_TESTS   : int = 1024
+var INT_NUM_TESTS   : int = 32
 
 # |------------------|
 # | Helper Functions |
@@ -64,7 +69,7 @@ func _int_to_array(
 		int_value: int) -> Array:
 
 	var int_arr: String = str(int_value)
-	var ret: Array
+	var ret: Array = []
 
 	for digit in int_arr:
 		ret.push_back(int(digit))
@@ -122,7 +127,7 @@ func test_int_to_binary() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
 		comparison = (comparison << 32) & 0xffffffff00000000
 		comparison += random.randi()
@@ -142,7 +147,7 @@ func test_binary_to_array() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
 		comparison = (comparison << 31) & 0x7fffffff00000000
 		comparison += random.randi()
@@ -162,7 +167,7 @@ func test_array_to_binary() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
 		comparison = (comparison << 31) & 0x7fffffff00000000
 		comparison += random.randi()
@@ -182,7 +187,7 @@ func test_hexadecimal_to_array() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
 		comparison = (comparison << 31) & 0x7fffffff00000000
 		comparison += random.randi()
@@ -201,7 +206,7 @@ func test_add_by_base() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -249,7 +254,7 @@ func test_add_binary_str() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -275,7 +280,7 @@ func test_compare_arrays() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -304,7 +309,7 @@ func test_compare_binary_str() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -325,7 +330,7 @@ func test_subtract_by_base() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -335,7 +340,7 @@ func test_subtract_by_base() -> void:
 		b += random.randi()
 
 		var comparison       : int
-		var comparison_flags : Dictionary
+		var comparison_flags : Dictionary = {}
 		if a > b:
 			comparison = a - b
 			comparison_flags[Basic.FLAGS.NEGATIVE] = false
@@ -343,10 +348,10 @@ func test_subtract_by_base() -> void:
 			comparison = b - a
 			comparison_flags[Basic.FLAGS.NEGATIVE] = true
 
-		var test_flags : Dictionary
-		var test_a     : Array = Basic.unsigned_int_to_array(a)
-		var test_b     : Array = Basic.unsigned_int_to_array(b)
-		var test_sum   : Array = Basic.subtract_by_base(
+		var test_flags : Dictionary = {}
+		var test_a     : Array      = Basic.unsigned_int_to_array(a)
+		var test_b     : Array      = Basic.unsigned_int_to_array(b)
+		var test_sum   : Array      = Basic.subtract_by_base(
 			test_a,
 			test_b,
 			test_flags,
@@ -390,7 +395,7 @@ func test_subtract_binary_str() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x3fffffff00000000
 		a += random.randi()
@@ -425,7 +430,7 @@ func test_coefficient_multiply_by_base() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a          : int   = random.randi() >> 1
 		var b          : int   = random.randi()
 		var comparison : int   = a * b
@@ -475,7 +480,7 @@ func test_multiply_by_base() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a          : int   = random.randi() >> 1
 		var b          : int   = random.randi()
 		var comparison : int   = a * b
@@ -551,7 +556,7 @@ func test_divide_binary_str() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		a = (a << 30) & 0x7fffffff00000000
 		a += random.randi()
@@ -560,6 +565,7 @@ func test_divide_binary_str() -> void:
 		b = (b << 30) & 0x7fffffff00000000
 		b += random.randi()
 
+		# warning-ignore:integer_division
 		var comparison_quotient  : int = int(a / b)
 		var comparison_remainder : int = a % b
 
@@ -590,7 +596,7 @@ func test_convert_bases() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
 		comparison = (comparison << 30) & 0x7fffffff00000000
 		comparison += random.randi()
@@ -614,7 +620,7 @@ func test_basic_initialization() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = (random.randi() << 32) + random.randi()
 
 		var test: Object = Basic.new(comparison)
@@ -652,7 +658,7 @@ func test_basic_set_value() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison: int = (random.randi() << 32) + random.randi()
 
 		var test: Object = Basic.new()
@@ -662,7 +668,7 @@ func test_basic_set_value() -> void:
 			assert_true(test.negative_bool)
 			assert_true(test.flags_dict[Basic.FLAGS.NEGATIVE])
 
-		assert_eq(str(comparison), test.to_decimal())
+		assert_eq(test.to_decimal(), str(comparison))
 
 		test = Basic.new()
 		test.set_value(comparison, Basic.INT_BYTE_BASE, (random.randi() % 32) + 3)
@@ -671,7 +677,7 @@ func test_basic_set_value() -> void:
 			assert_true(test.negative_bool)
 			assert_true(test.flags_dict[Basic.FLAGS.NEGATIVE])
 
-		assert_eq(str(comparison), test.to_decimal())
+		assert_eq(test.to_decimal(), str(comparison))
 
 		comparison  = (random.randi() << 31) & 0x7fffffff00000000
 		comparison += random.randi()
@@ -686,6 +692,11 @@ func test_basic_set_value() -> void:
 		var test_obj: Object = Basic.new(test)
 
 		assert_eq(test_obj.to_decimal(), test.to_decimal())
+
+		test = Basic.new()
+		test.set_value(str(comparison))
+
+		assert_eq(test.to_decimal(), str(comparison))
 
 
 func test_basic_set_base_int() -> void:
@@ -777,7 +788,7 @@ func test_basic_to_decimal() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison : int = (random.randi() << 32) + random.randi()
 		var test       : PressAccept_Arbiter_Basic = Basic.new(comparison)
 
@@ -789,7 +800,7 @@ func test_basic_to_hexadecimal() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var comparison : int = (random.randi() << 32) + random.randi()
 		var test       : PressAccept_Arbiter_Basic = Basic.new(comparison)
 
@@ -801,7 +812,7 @@ func test_basic_add() -> void:
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		if random.randi() > (1 << 32) / 2:
 			a *= -1
@@ -818,9 +829,11 @@ func test_basic_add() -> void:
 		assert_eq(test.to_decimal(), str(comparison))
 
 		var b_arr: Array = Basic.unsigned_int_to_array(b)
+		if b < 0:
+			b_arr.push_front(-1)
 
 		test = Basic.new(a)
-		test.add(b, Basic.INT_BYTE_BASE)
+		test.add(b_arr, Basic.INT_BYTE_BASE)
 
 		assert_eq(test.to_decimal(), str(comparison))
 
@@ -838,13 +851,18 @@ func test_basic_add() -> void:
 
 		assert_eq(test.to_decimal(), str(comparison))
 
+		test = Basic.new(a)
+		test.add(str(b))
+
+		assert_eq(test.to_decimal(), str(comparison))
+
 
 func test_basic_compare() -> void:
 
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		if random.randi() > (1 << 32) / 2:
 			a *= -1
@@ -868,13 +886,15 @@ func test_basic_compare() -> void:
 		var test_b_obj: PressAccept_Arbiter_Basic = PressAccept_Arbiter_Basic.new(b)
 		assert_eq(test.compare(test_b_obj), comparison)
 
+		assert_eq(test.compare(str(b)), comparison)
+
 
 func test_basic_subtract() -> void:
 
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int = random.randi()
 		if random.randi() > (1 << 32) / 2:
 			a *= -1
@@ -891,9 +911,11 @@ func test_basic_subtract() -> void:
 		assert_eq(test.to_decimal(), str(comparison))
 
 		var b_arr: Array = Basic.unsigned_int_to_array(b)
+		if b < 0:
+			b_arr.push_front(-1)
 
 		test = Basic.new(a)
-		test.subtract(b, Basic.INT_BYTE_BASE)
+		test.subtract(b_arr, Basic.INT_BYTE_BASE)
 
 		assert_eq(test.to_decimal(), str(comparison))
 
@@ -911,13 +933,18 @@ func test_basic_subtract() -> void:
 
 		assert_eq(test.to_decimal(), str(comparison))
 
+		test = Basic.new(a)
+		test.subtract(str(b))
+
+		assert_eq(test.to_decimal(), str(comparison))
+
 
 func test_basic_multiply() -> void:
 
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int   = random.randi() >> 1
 		var b: int   = random.randi()
 
@@ -935,16 +962,20 @@ func test_basic_multiply() -> void:
 		assert_eq(test.to_decimal(), str(comparison))
 
 		var b_arr: Array = Basic.unsigned_int_to_array(b)
+		if b < 0:
+			b_arr.push_front(-1)
 
 		test = Basic.new(a)
-		test.multiply(b, Basic.INT_BYTE_BASE)
+		test.multiply(b_arr, Basic.INT_BYTE_BASE)
 
 		assert_eq(test.to_decimal(), str(comparison))
 
 		b_arr = _int_to_array(b)
+		if b < 0:
+			b_arr.push_front(-1)
 
 		test = Basic.new(a)
-		test.multiply(b, 10)
+		test.multiply(b_arr, 10)
 
 		assert_eq(test.to_decimal(), str(comparison))
 
@@ -960,13 +991,18 @@ func test_basic_multiply() -> void:
 
 		assert_eq(test.to_decimal(), str(0))
 
+		test = Basic.new(a)
+		test.multiply(str(b))
+
+		assert_eq(test.to_decimal(), str(comparison))
+
 
 func test_basic_divide() -> void:
 
 	var random: RandomNumberGenerator = RandomNumberGenerator.new()
 	random.seed = INT_RANDOM_SEED
 
-	for i in range(INT_NUM_TESTS):
+	for _i in range(INT_NUM_TESTS):
 		var a: int   = random.randi() >> 1
 		var b: int   = random.randi()
 
@@ -976,6 +1012,7 @@ func test_basic_divide() -> void:
 		if random.randi() > (1 << 32) / 2:
 			b *= -1
 
+		# warning-ignore:integer_division
 		var comparison_quotient  : int = int(a / b)
 		var comparison_remainder : int = a % b
 
@@ -988,9 +1025,11 @@ func test_basic_divide() -> void:
 		assert_eq(test_remainder, str(comparison_remainder))
 
 		var b_arr: Array = Basic.unsigned_int_to_array(b)
+		if b < 0:
+			b_arr.push_front(-1)
 
 		test           = Basic.new(a)
-		test_result    = test.divide(b, Basic.INT_BYTE_BASE)
+		test_result    = test.divide(b_arr, Basic.INT_BYTE_BASE)
 		test_quotient  = test_result[Basic.DIVISION.QUOTIENT].to_decimal()
 		test_remainder = test_result[Basic.DIVISION.REMAINDER].to_decimal()
 
@@ -1011,6 +1050,14 @@ func test_basic_divide() -> void:
 
 		test           = Basic.new(a)
 		test_result    = test.divide(test_b)
+		test_quotient  = test_result[Basic.DIVISION.QUOTIENT].to_decimal()
+		test_remainder = test_result[Basic.DIVISION.REMAINDER].to_decimal()
+
+		assert_eq(test_quotient , str(comparison_quotient) )
+		assert_eq(test_remainder, str(comparison_remainder))
+
+		test           = Basic.new(a)
+		test_result    = test.divide(str(b))
 		test_quotient  = test_result[Basic.DIVISION.QUOTIENT].to_decimal()
 		test_remainder = test_result[Basic.DIVISION.REMAINDER].to_decimal()
 
