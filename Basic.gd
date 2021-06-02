@@ -39,8 +39,8 @@ class_name PressAccept_Arbiter_Basic
 # instantiate this script and use the corresponding instance methods.
 #
 # NOTE: it's not recommended to use the convert_bases function to convert an
-#       integer value to binary, use int_to_binary, and array_to_binary for
-#       that purpose.
+#       integer value to binary, use int_to_binary, and array_to_binary, and
+#       instance.to_binary() for that purpose.
 #
 # |--------------|
 # | Side Effects |
@@ -64,11 +64,12 @@ class_name PressAccept_Arbiter_Basic
 #
 # Author        : Asher Kadar Wolfstein
 # Author URI    : https://wunk.me/ (Personal Blog)
-# Author Social : https://incarnate.me/members/asherwolfstein/ (incarnate.me)
+# Author Social : https://incarnate.me/members/asherwolfstein/
 #                 @asherwolfstein (Twitter)
+#                 https://ko-fi.com/asherwolfstein
 #
 # Copyright : Press Accept: Arbiter © 2021 The Novelty Factor LLC
-#                 (Kadar Development, Asher Kadar Wolfstein)
+#                 (Press Accept, Asher Kadar Wolfstein)
 # License   : MIT (see LICENSE)
 #
 # |-----------|
@@ -80,7 +81,19 @@ class_name PressAccept_Arbiter_Basic
 #                            as argument to instance
 #                        Altered unsigned_int_to_array to use Array
 #                            and push_front
+# 1.0.2    05/26/2021    Added signal_value_change to instance
+#                        Added signal 'value_changed' to instance
+# 1.1.0    06/01/2021    Simplified return computations on some functions
+#                        Added octal_to_array and array_to_octal
+#                        Optimized convert_bases for equivalent bases
+#                        Added String as passable value to _init and set_value
+#                        Added to_octal and to_signed_octal
+#                        Added to_signed_hexadecimal
+#                        Added immutable_* methods (add, subtract, multiply)
 #
+
+# warning-ignore-all:return_value_discarded
+# warning-ignore-all:integer_division
 
 # ****************
 # | Enumerations |
@@ -190,9 +203,9 @@ const ARR_POWERS_OF_2: Array = [
 # 64 - 1 because godot integers are *signed* 2s-complement 64 bit sequences
 const INT_MAX_BITS  : int = 64 - 1 # length of ARR_POWERS_OF_2
 
-# dictionary mapping hexadecimal digits to decimal equivalents
+# array mapping hexadecimal digits to decimal equivalents
 #
-# key - decimal value, value - hexadecimal digit
+# index - decimal value, value - hexadecimal digit
 const ARR_HEXADECIMAL_DIGITS: Array = [
 	'0',
 	'1',
@@ -204,12 +217,12 @@ const ARR_HEXADECIMAL_DIGITS: Array = [
 	'7',
 	'8',
 	'9',
-	'A',
-	'B',
-	'C',
-	'D',
-	'E',
-	'F'
+	'a',
+	'b',
+	'c',
+	'd',
+	'e',
+	'f'
 ]
 
 # number of expected bits in a byte
@@ -232,8 +245,7 @@ const INT_BYTE_BASE : int = 1 << INT_BYTE_BITS
 static func int_to_binary(
 		int_value : int) -> String: # num bits to output
 
-	var original : int    = int_value
-	var ret      : String = ''
+	var ret: String = ''
 
 	# 2s-complement will return -1 rather than 0
 	while int_value != 0 and int_value != -1:
@@ -249,9 +261,7 @@ static func int_to_binary(
 	else:
 		ret = '0' + ret
 
-	ret = ret if ret else '0'
-
-	return ret
+	return ret if ret else '0'
 
 
 # converts straight binary to bytes
@@ -306,9 +316,6 @@ static func array_to_binary(
 
 	ret = ret.lstrip('0')
 
-	if not ret:
-		ret = '0'
-
 	return ret if ret else '0'
 
 
@@ -335,7 +342,35 @@ static func hexadecimal_to_array(
 	var digits_arr: Array = []
 
 	for digit in hexadecimal_str:
-		digits_arr.push_back(ARR_HEXADECIMAL_DIGITS.find(digit))
+		digits_arr.push_back(ARR_HEXADECIMAL_DIGITS.find(digit.to_lower()))
+
+	return digits_arr
+
+
+# convert array of octal place-values (0 - 7) to a string of octal digits
+#
+# passing an array of values other than 0 - 7 will have an undefined result
+static func array_to_octal(
+		digits_arr: Array) -> String:
+
+	var ret: String = ''
+
+	for digit in digits_arr:
+		ret += str(digit)
+
+	return ret
+
+
+# convert an octal string to an array of octal place-values (0 - 17
+#
+# a string containing digits other than 0 - 7 will have an undefined result
+static func octal_to_array(
+		octal_str: String) -> Array:
+
+	var digits_arr: Array = []
+
+	for digit in octal_str:
+		digits_arr.push_back(int(digit))
 
 	return digits_arr
 
@@ -392,7 +427,7 @@ static func lstrip(
 static func add_by_base(
 		augend_arr : Array,
 		addend_arr : Array,
-		base_int   : int = INT_BYTE_BASE) -> Array:
+		_base_int   : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ augend_arr, addend_arr ])
 
@@ -408,8 +443,8 @@ static func add_by_base(
 		var addend : int = _access(addend_arr, -i - 1)
 		var sum    : int = augend + addend + carry
 
-		carry  = int(sum / base_int)
-		ret[-i - 1] = sum % base_int
+		carry  = int(sum / _base_int)
+		ret[-i - 1] = sum % _base_int
 
 	return lstrip(ret, 0)
 
@@ -502,8 +537,7 @@ static func compare_binary_str(
 	left_relation_str  = left_relation_str  if left_relation_str  else '0'
 	right_relation_str = right_relation_str if right_relation_str else '0'
 
-	var ret     : String = ''
-	var max_len : int    = \
+	var max_len: int = \
 		int(max(left_relation_str.length(), right_relation_str.length())) + 1
 
 	left_relation_str = left_relation_str.pad_zeros(max_len)
@@ -531,7 +565,7 @@ static func subtract_by_base(
 		minuend_arr    : Array,
 		subtrahend_arr : Array,
 		flags          : Dictionary,
-		base_int       : int = INT_BYTE_BASE) -> Array:
+		_base_int       : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ minuend_arr, subtrahend_arr ])
 
@@ -557,10 +591,10 @@ static func subtract_by_base(
 		if minuend < subtrahend:
 			var carry_from: int = i + 1
 			while _minuend[-carry_from - 1] == 0:
-				_minuend[-carry_from - 1] = base_int - 1
+				_minuend[-carry_from - 1] = _base_int - 1
 				carry_from += 1
 			_minuend[-carry_from - 1] -= 1
-			minuend += base_int
+			minuend += _base_int
 
 		ret[-i - 1] = minuend - subtrahend
 
@@ -620,7 +654,7 @@ static func subtract_binary_str(
 static func coefficient_multiply_by_base(
 		coefficient_arr  : Array,
 		multiplicand_arr : Array,
-		base_int         : int = INT_BYTE_BASE) -> Array:
+		_base_int         : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ coefficient_arr, multiplicand_arr ])
 
@@ -630,14 +664,14 @@ static func coefficient_multiply_by_base(
 
 	while '1' in coefficient_str:
 		if coefficient_str.ends_with('1'):
-			ret = add_by_base(ret, power, base_int)
+			ret = add_by_base(ret, power, _base_int)
 
 		coefficient_str = shift_binary_str_right((coefficient_str))
 
 		if not '1' in coefficient_str:
 			break
 
-		power = add_by_base(power, power, base_int)
+		power = add_by_base(power, power, _base_int)
 
 	return ret
 
@@ -649,7 +683,7 @@ static func coefficient_multiply_by_base(
 static func multiply_by_base(
 		multiplier_arr   : Array,
 		multiplicand_arr : Array,
-		base_int         : int = INT_BYTE_BASE) -> Array:
+		_base_int         : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ multiplier_arr, multiplicand_arr ])
 
@@ -663,20 +697,20 @@ static func multiply_by_base(
 	for i in range(multiplicand_arr.size()):
 		var multiplier       : int = multiplicand_arr[-i - 1]
 		var multiplier_shift : int = 0
-		var partials         : Array
+		var partials         : Array = []
 
 		for j in range(multiplier_len):
 			var partial_product : Array
 			var result          : int = multiplier * multiplier_arr[-j - 1]
 
-			if result > base_int - 1:
-				var units: int = int(result / base_int)
+			if result > _base_int - 1:
+				var units: int = int(result / _base_int)
 
-				partial_product = Array([ units, result - (units * base_int) ])
+				partial_product = Array([ units, result - (units * _base_int) ])
 			else:
 				partial_product = Array([result])
 
-			for k in range(multiplier_shift + multiplicand_shift):
+			for _k in range(multiplier_shift + multiplicand_shift):
 				partial_product.push_back(0)
 
 			partials.push_back(partial_product)
@@ -684,14 +718,14 @@ static func multiply_by_base(
 
 		var total: Array
 		for partial in partials:
-			total = add_by_base(partial, total, base_int)
+			total = add_by_base(partial, total, _base_int)
 		partial_products.push_back(total)
 
 		multiplicand_shift += 1
 
 	var total: Array
 	for partial_product in partial_products:
-		total = add_by_base(partial_product, total, base_int)
+		total = add_by_base(partial_product, total, _base_int)
 
 	return lstrip(total, 0)
 
@@ -743,7 +777,7 @@ static func divide_binary_str(
 	remainder    = remainder.pad_zeros(max_len)
 	quotient     = dividend_str
 
-	for i in range(max_len):
+	for _i in range(max_len):
 		var remainder_quotient: String = \
 			shift_binary_str_left( remainder + quotient)
 		remainder = remainder_quotient.substr(0, max_len)
@@ -764,6 +798,9 @@ static func convert_bases(
 		input     : Array,
 		from_base : int,
 		to_base   : int) -> Array:
+
+	if from_base == to_base:
+		return input.duplicate()
 
 	var out           : Array = []
 	var power         : Array = [1]
@@ -819,12 +856,12 @@ static func _normalize(
 
 # is this place-values array equal to zero?
 static func _is_zero(
-		value_arr: Array) -> bool:
+		_value_arr: Array) -> bool:
 
-	if not value_arr:
+	if not _value_arr:
 		return true
 
-	if value_arr.size() == 1 and value_arr[0] == 0:
+	if _value_arr.size() == 1 and _value_arr[0] == 0:
 		return true
 
 	return false
@@ -847,6 +884,8 @@ static func _is_zero(
 #       to verify if an instance is negative itself use negative_bool or flags.
 #
 
+signal value_changed(new_decimal_value, old_decimal_value, emitter)
+
 # *********************
 # | Public Properties |
 # *********************
@@ -861,13 +900,16 @@ var flags_dict : Dictionary = {
 	FLAGS.NEGATIVE: false
 }
 
+# do we signal if the value has changed?
+var signal_value_change : bool = false
+
 # the base of the internal place-values array value_arr
 #
 # setting this will convert values_arr to that base
-var base_int      : int = INT_BYTE_BASE setget set_base_int
+var base_int            : int  = INT_BYTE_BASE setget set_base_int
 
 # shorthand for the information in flags_dict[FLAGS.NEGATIVE]
-var negative_bool : bool setget set_negative, get_negative
+var negative_bool       : bool setget set_negative, get_negative
 
 
 # ***************
@@ -875,9 +917,9 @@ var negative_bool : bool setget set_negative, get_negative
 # ***************
 
 
-# constructor(INT|ARRAY|OBJECT, int)
+# constructor( int | String | Array | Object, int)
 #
-# If the first argument is an array, then init_base represents the radix of
+# if the first argument is an array, then init_base represents the radix of
 # that array and will be the radix of the new values_arr, otherwise init_base
 # indicates the radix by which the new value will be stored
 func _init(
@@ -921,7 +963,22 @@ func set_base_int(
 func set_negative(
 		new_value: bool) -> void:
 
+	if new_value == flags_dict[FLAGS.NEGATIVE]:
+		return
+
+	var old_decimal_value: String
+	if signal_value_change:
+		old_decimal_value = to_decimal()
+
 	flags_dict[FLAGS.NEGATIVE] = new_value
+
+	if signal_value_change:
+		emit_signal(
+			'value_changed',
+			to_decimal(),
+			old_decimal_value,
+			self
+		)
 
 
 # consequence of instance.negative_bool
@@ -945,7 +1002,11 @@ func get_negative() -> bool:
 func set_value(
 		new_value            = 0,
 		new_value_base : int = INT_BYTE_BASE,
-		new_base       : int = 0) -> void:
+		new_base       : int = base_int) -> void:
+
+	var old_decimal_value: String
+	if signal_value_change:
+		old_decimal_value = to_decimal()
 
 	if not new_base:
 		new_base = base_int
@@ -955,13 +1016,14 @@ func set_value(
 	match typeof(new_value):
 		TYPE_STRING:
 			new_value = new_value if new_value else '0'
-			var base_10_arr: Array
+			var base_10_arr: Array = []
+			if new_value[0] == '-':
+				self.negative_bool = true
+				base_10_arr.push_back(-1)
+				new_value = new_value.substr(1)
 
 			for digit in new_value:
-				if digit == '-':
-					base_10_arr.push_back(-1)
-				else:
-					base_10_arr.push_back(int(digit))
+				base_10_arr.push_back(int(digit))
 
 			set_value(base_10_arr, 10, new_base)
 			return
@@ -1001,6 +1063,14 @@ func set_value(
 
 	base_int = new_base
 
+	if signal_value_change:
+		emit_signal(
+			'value_changed',
+			to_decimal(),
+			old_decimal_value,
+			self
+		)
+
 
 # is the internal value equal to zero?
 func is_zero() -> bool:
@@ -1028,7 +1098,7 @@ func to_array(
 	return ret
 
 
-# returns a signed 2s complement binary representation of the internal value
+# returns a signed 2s-complement binary representation of the internal value
 #
 # NOTE: positive thus is prefaced by a '0'
 func to_binary() -> String:
@@ -1045,7 +1115,7 @@ func to_binary() -> String:
 		bytes = subtract_by_base(bytes, [ 1 ], {}, INT_BYTE_BASE)
 
 	var binary : String = array_to_binary(bytes)
-	var ret    : String
+	var ret    : String = ''
 
 	if self.negative_bool and not is_zero():
 		ret += '1'
@@ -1076,6 +1146,52 @@ func to_decimal() -> String:
 	return ret
 
 
+# returns a string of octal digits representing the internal value
+#
+# NOTE: negative values are prefaced by a '-'
+func to_octal() -> String:
+
+	var digits: Array
+
+	if base_int != 8:
+		digits = convert_bases(value_arr, base_int, 8)
+	else:
+		digits = value_arr
+
+	return ('-' if self.negative_bool and not is_zero() else '') + \
+		array_to_octal(digits)
+
+
+# returns a string of octal digits representing the internal value
+#
+# applies 2s-complement to underlying binary and returns octal of that result
+func to_signed_octal() -> String:
+
+	if not self.negative_bool:
+		var ret: String = to_octal()
+		# if leftmost bit is '1' it would be 'signed'
+		match ret[0]:
+			'4', '5', '6', '7':
+				ret = '0' + ret
+		return ret
+
+	var temp_arr : PressAccept_Arbiter_Basic = get_script().new(
+		binary_to_array(to_binary()),
+		INT_BYTE_BASE
+	)
+	
+	temp_arr.base_int = 8
+
+	# fill in 1's to the left
+	for i in range(2, -1, -1):
+		if not temp_arr.value_arr[0] & (1 << i):
+			temp_arr.value_arr[0] += (1 << i)
+		else:
+			break
+
+	return temp_arr.to_octal()
+
+
 # returns a string of hexadecimal digits representing the internal value
 #
 # NOTE: negative values are prefaced by a '-'
@@ -1092,12 +1208,47 @@ func to_hexadecimal() -> String:
 		array_to_hexadecimal(digits)
 
 
+# returns a string of hexadecimal digits representing the internal value
+#
+# applies 2s-complement to underlying binary and returns hex of that result
+func to_signed_hexadecimal() -> String:
+
+	if not self.negative_bool:
+		var ret: String = to_hexadecimal()
+		# if leftmost bit is '1' it would be 'signed'
+		match ret[0]:
+			'8', '9', 'a', 'b', 'c', 'd', 'e', 'f':
+				ret = '0' + ret
+		return ret
+
+	var temp_arr : PressAccept_Arbiter_Basic = get_script().new(
+		binary_to_array(to_binary()),
+		INT_BYTE_BASE
+	)
+
+	temp_arr.base_int = 16
+
+	# fill in 1's to the left
+	for i in range(3, -1, -1):
+		if not temp_arr.value_arr[0] & (1 << i):
+			temp_arr.value_arr[0] += (1 << i)
+		else:
+			break
+
+	return temp_arr.to_hexadecimal()
+
+
+
 # adds addend (integer, string, array, or object) to internal value
 #
 # NOTE: addend_base_int is ignored unless addend is array
 func add(
 		addend,
 		addend_base_int: int = INT_BYTE_BASE) -> PressAccept_Arbiter_Basic:
+
+	var old_decimal_value: String
+	if signal_value_change:
+		old_decimal_value = to_decimal()
 
 	addend = _normalize_operand(addend, addend_base_int)
 
@@ -1117,7 +1268,32 @@ func add(
 				subtract_by_base(value_arr, addend.value_arr, flags, base_int)
 			self.negative_bool = flags[FLAGS.NEGATIVE]
 
+	if signal_value_change:
+		emit_signal(
+			'value_changed',
+			to_decimal(),
+			old_decimal_value,
+			self
+		)
+
 	return self
+
+
+# adds addend (integer, string, array, or object) to internal value
+#
+# NOTE: addend_base_int is ignored unless addend is array
+func immutable_add(
+		addend,
+		addend_base_int: int = INT_BYTE_BASE) -> PressAccept_Arbiter_Basic:
+
+	addend = _normalize_operand(addend, addend_base_int)
+
+	if not addend:
+		return null
+
+	var ret_value: PressAccept_Arbiter_Basic = get_script().new(self)
+	ret_value.add(addend, addend_base_int)
+	return ret_value
 
 
 # compares comparison (integer, string, array, or object) to internal value
@@ -1156,6 +1332,10 @@ func subtract(
 		subtrahend,
 		subtrahend_base_int: int = INT_BYTE_BASE) -> PressAccept_Arbiter_Basic:
 
+	var old_decimal_value: String
+	if signal_value_change:
+		old_decimal_value = to_decimal()
+
 	subtrahend = _normalize_operand(subtrahend, subtrahend_base_int)
 
 	if not subtrahend:
@@ -1183,7 +1363,32 @@ func subtract(
 
 			self.negative_bool = not flags[FLAGS.NEGATIVE]
 
+	if signal_value_change:
+		emit_signal(
+			'value_changed',
+			to_decimal(),
+			old_decimal_value,
+			self
+		)
+
 	return self
+
+
+# subtracts subtrahend (integer, string, array, or object) from internal value
+#
+# NOTE: addend_base_int is ignored unless addend is array
+func immutable_subtract(
+		subtrahend,
+		subtrahend_base_int: int = INT_BYTE_BASE) -> PressAccept_Arbiter_Basic:
+
+	subtrahend = _normalize_operand(subtrahend, subtrahend_base_int)
+
+	if not subtrahend:
+		return null
+
+	var ret_value: PressAccept_Arbiter_Basic = get_script().new(self)
+	ret_value.subtract(subtrahend, subtrahend_base_int)
+	return ret_value
 
 
 # multiplies multiplicand (integer, string, array, or object) by internal value
@@ -1193,6 +1398,10 @@ func multiply(
 		multiplicand,
 		multiplicand_base_int: int = INT_BYTE_BASE
 		) -> PressAccept_Arbiter_Basic:
+
+	var old_decimal_value: String
+	if signal_value_change:
+		old_decimal_value = to_decimal()
 
 	multiplicand = _normalize_operand(multiplicand, multiplicand_base_int)
 
@@ -1210,12 +1419,40 @@ func multiply(
 		[ false, true  ], [ true, false ]:
 			self.negative_bool = true
 
+	if signal_value_change:
+		emit_signal(
+			'value_changed',
+			to_decimal(),
+			old_decimal_value,
+			self
+		)
+
 	return self
+
+
+# multiplies multiplicand (integer, string, array, or object) by internal value
+#
+# NOTE: addend_base_int is ignored unless addend is array
+func immutable_multiply(
+		multiplicand,
+		multiplicand_base_int: int = INT_BYTE_BASE \
+		) -> PressAccept_Arbiter_Basic:
+
+	multiplicand = _normalize_operand(multiplicand, multiplicand_base_int)
+
+	if not multiplicand:
+		return null
+
+	var ret_value: PressAccept_Arbiter_Basic = get_script().new(self)
+	ret_value.multiply(multiplicand, multiplicand_base_int)
+	return ret_value
 
 
 # divides internal value by divisor (integer, string, array, or object)
 #
 # NOTE: divisor_base_int is ignored unless divisor is array
+#
+# immutable by design
 #
 # returns an array where [DIVISION.QUOTIENT] equals the quotient as object of
 # same base and [DIVISION.REMAINDER] equals the remainder as object of same

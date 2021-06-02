@@ -64,6 +64,17 @@ License - MIT (see LICENSE)
 ### Changelog
 
 1.0 05/24/2021 First Release
+1.1 06/01/2021 Added String as passable value to _init and set_value
+               Added signal_value_changed boolean to Basic
+               Added value_changed signal to Basic
+               Added static functions:
+                   octal_to_array
+                   array_to_octal
+               Added instance methods:
+                   to_octal
+                   to_signed_octal
+                   to_signed_hexadecimal
+                   immutable_* (add, subtract, multiply)
 
 ### Notes On Style
 
