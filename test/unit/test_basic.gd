@@ -487,6 +487,7 @@ func test_subtract_binary_str() -> void:
 		var comparison_flags : Dictionary = {}
 		if a > b:
 			comparison = a - b
+			comparison_flags[Basic.FLAGS.NEGATIVE] = false
 		else:
 			comparison = b - a
 			comparison_flags[Basic.FLAGS.NEGATIVE] = true
