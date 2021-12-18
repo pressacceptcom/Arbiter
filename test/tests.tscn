@@ -10,4 +10,4 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-_directory1 = "res://test/unit"
+_directory1 = "res://addons/PressAccept/Arbiter/test/unit"
