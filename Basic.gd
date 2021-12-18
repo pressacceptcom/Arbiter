@@ -201,7 +201,7 @@ const ARR_POWERS_OF_2: Array = [
 #
 # x << 64 is illegal (invalid operands), length
 # 64 - 1 because godot integers are *signed* 2s-complement 64 bit sequences
-const INT_MAX_BITS  : int = 64 - 1 # length of ARR_POWERS_OF_2
+const INT_MAX_BITS : int = 64 - 1 # length of ARR_POWERS_OF_2
 
 # array mapping hexadecimal digits to decimal equivalents
 #
@@ -243,7 +243,7 @@ const INT_BYTE_BASE : int = 1 << INT_BYTE_BITS
 #
 # Godot uses 2s-complement to indicate negative values
 static func int_to_binary(
-		int_value : int) -> String: # num bits to output
+		int_value : int) -> String:
 
 	var ret: String = ''
 
@@ -280,9 +280,10 @@ static func binary_to_array(
 		int(binary_len / INT_BYTE_BITS) + \
 		(1 if binary_len % INT_BYTE_BITS else 0)
 	var bits       : int   = units * INT_BYTE_BITS
-	var binary_arr : Array = []
 
 	binary_str = binary_str.pad_zeros(bits)
+
+	var binary_arr : Array = []
 
 	for i in range(0, bits, INT_BYTE_BITS):
 		var byte_str: String = binary_str.substr(i, INT_BYTE_BITS)
@@ -361,7 +362,7 @@ static func array_to_octal(
 	return ret
 
 
-# convert an octal string to an array of octal place-values (0 - 17
+# convert an octal string to an array of octal place-values (0 - 7)
 #
 # a string containing digits other than 0 - 7 will have an undefined result
 static func octal_to_array(
@@ -427,7 +428,7 @@ static func lstrip(
 static func add_by_base(
 		augend_arr : Array,
 		addend_arr : Array,
-		_base_int   : int = INT_BYTE_BASE) -> Array:
+		_base_int  : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ augend_arr, addend_arr ])
 
@@ -540,7 +541,7 @@ static func compare_binary_str(
 	var max_len: int = \
 		int(max(left_relation_str.length(), right_relation_str.length())) + 1
 
-	left_relation_str = left_relation_str.pad_zeros(max_len)
+	left_relation_str  = left_relation_str.pad_zeros(max_len)
 	right_relation_str = right_relation_str.pad_zeros(max_len)
 
 	for i in range(max_len):
@@ -565,7 +566,7 @@ static func subtract_by_base(
 		minuend_arr    : Array,
 		subtrahend_arr : Array,
 		flags          : Dictionary,
-		_base_int       : int = INT_BYTE_BASE) -> Array:
+		_base_int      : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ minuend_arr, subtrahend_arr ])
 
@@ -616,6 +617,8 @@ static func subtract_binary_str(
 	minuend_str    = minuend_str    if minuend_str    else '0'
 	subtrahend_str = subtrahend_str if subtrahend_str else '0'
 
+	flags[FLAGS.NEGATIVE] = false
+
 	if compare_binary_str(minuend_str, subtrahend_str) == RELATION.LESS_THAN:
 		var temp: String = minuend_str
 		minuend_str = subtrahend_str
@@ -654,7 +657,7 @@ static func subtract_binary_str(
 static func coefficient_multiply_by_base(
 		coefficient_arr  : Array,
 		multiplicand_arr : Array,
-		_base_int         : int = INT_BYTE_BASE) -> Array:
+		_base_int        : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ coefficient_arr, multiplicand_arr ])
 
@@ -683,7 +686,7 @@ static func coefficient_multiply_by_base(
 static func multiply_by_base(
 		multiplier_arr   : Array,
 		multiplicand_arr : Array,
-		_base_int         : int = INT_BYTE_BASE) -> Array:
+		_base_int        : int = INT_BYTE_BASE) -> Array:
 
 	_normalize([ multiplier_arr, multiplicand_arr ])
 
@@ -691,12 +694,12 @@ static func multiply_by_base(
 		return [ 0 ]
 
 	var partial_products : Array = []
-	var multiplier_len   : int = multiplier_arr.size()
+	var multiplier_len   : int   = multiplier_arr.size()
 
 	var multiplicand_shift: int = 0
 	for i in range(multiplicand_arr.size()):
-		var multiplier       : int = multiplicand_arr[-i - 1]
-		var multiplier_shift : int = 0
+		var multiplier       : int   = multiplicand_arr[-i - 1]
+		var multiplier_shift : int   = 0
 		var partials         : Array = []
 
 		for j in range(multiplier_len):
@@ -754,7 +757,7 @@ static func shift_binary_str_right(
 #       positive integer. To divide signed values please see the invluded Class
 #       definition below.
 #
-# returns an array where [DIVISION.QUOTIENT] is the quotient in as a binary
+# returns an array where [DIVISION.QUOTIENT] is the quotient as a binary
 # string representation and [DIVISION.REMAINDER] is the remainder as a binary
 # string representation
 static func divide_binary_str(
@@ -804,7 +807,7 @@ static func convert_bases(
 
 	var out           : Array = []
 	var power         : Array = [1]
-	var from_base_arr : = unsigned_int_to_array(from_base)
+	var from_base_arr : Array = unsigned_int_to_array(from_base)
 
 	for i in range(input.size()):
 		if input[-i - 1]:
@@ -935,7 +938,7 @@ func _init(
 				init_value.pop_front()
 
 			value_arr = init_value
-			base_int = init_base
+			base_int  = init_base
 
 		_:
 			set_value(init_value, INT_BYTE_BASE, init_base)
@@ -954,7 +957,7 @@ func set_base_int(
 
 	if new_base_int != base_int:
 		value_arr = convert_bases(value_arr, base_int, new_base_int)
-		base_int = new_base_int
+		base_int  = new_base_int
 
 
 # consequence of instance.negative_bool = x
@@ -1055,7 +1058,7 @@ func set_value(
 
 		TYPE_OBJECT:
 			self.negative_bool = new_value.negative_bool
-			value_arr     = convert_bases(
+			value_arr = convert_bases(
 				new_value.value_arr,
 				new_value.base_int,
 				new_base
@@ -1526,4 +1529,3 @@ func _normalize_operand(
 	operand.base_int = base_int
 
 	return operand
-
