@@ -887,6 +887,10 @@ static func _is_zero(
 #       to verify if an instance is negative itself use negative_bool or flags.
 #
 
+# ***********
+# | Signals |
+# ***********
+
 signal value_changed(new_decimal_value, old_decimal_value, emitter)
 
 # *********************

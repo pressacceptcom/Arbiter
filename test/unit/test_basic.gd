@@ -151,7 +151,7 @@ func test_int_to_binary() -> void:
 
 	for _i in range(INT_NUM_TESTS):
 		var comparison: int = random.randi()
-		comparison = (comparison << 32) & 0xffffffff00000000
+		comparison = (comparison << 32) & 0x7fffffff00000000
 		comparison += random.randi()
 
 		var test: String = Basic.int_to_binary(comparison)
