@@ -2,6 +2,8 @@
 .import
 addons
 project.godot
+default_env.tres
+icon.png*
 
 # OS Specific Ignorances
 
